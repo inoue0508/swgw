@@ -12,9 +12,9 @@
             "program": "${fileDirname}",
             "env": {},
             "args": [
-                "cf",
-                "task",
-                "ec2",
+                "pl",
+                "inoue-test",
+                "Pipeline-swgw-poc-general",
             ]
         }
     ]
