@@ -3,8 +3,9 @@ package command
 import (
 	"fmt"
 	"os"
+        "net/http"
 	"swgw/common"
-
+	"net/url"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/codepipeline"
@@ -16,6 +17,7 @@ import (
 const InProgress = "InProgress"
 
 var redisURL = os.Getenv("REDIS_URL")
+var httpProxy = os.Getenv("PROXY")
 
 //NewPLCommand cfコマンドを作成する
 func NewPLCommand() *cobra.Command {
@@ -24,9 +26,23 @@ func NewPLCommand() *cobra.Command {
 		Short: "get pipeline status and notify mattermost",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//sessionの作成。~/.aws/にある認証情報を使用する。
+			//sess := session.Must(session.NewSessionWithOptions(session.Options{
+			//	SharedConfigState: session.SharedConfigEnable,
+			//}))
+                        httpClient := http.Client{
+				Transport: &http.Transport{
+					Proxy: func(*http.Request) (*url.URL, error) {
+						return url.Parse(httpProxy)
+					},
+				},
+			}
 			sess := session.Must(session.NewSessionWithOptions(session.Options{
 				SharedConfigState: session.SharedConfigEnable,
+				Config: aws.Config{
+					HTTPClient: &httpClient,
+				},
 			}))
+
 			return notifyPipelineStatus(cmd, args, sess)
 		},
 	}
