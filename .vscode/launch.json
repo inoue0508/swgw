@@ -9,12 +9,11 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${fileDirname}",
+            "program": "C:\\Users\\f016003\\go\\src\\swgw",
             "env": {},
             "args": [
-                "pl",
-                "inoue-test",
-                "Pipeline-swgw-poc-general",
+                "cost",
+                "s3",
             ]
         }
     ]

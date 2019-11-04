@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"os"
 	"text/template"
+	"time"
 )
 
-var url = os.Getenv("MATTERMOST_URL")
+var urlMattermost = os.Getenv("MATTERMOST_URL")
 var pipelineURL = os.Getenv("PIPELINE_URL")
 
 //NotifyMM mattermostにhttpリクエストを送信する
@@ -20,7 +21,7 @@ func NotifyMM(name, status string) error {
 	}
 	bodyByte := []byte(body)
 
-	request, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyByte))
+	request, err := http.NewRequest("POST", urlMattermost, bytes.NewBuffer(bodyByte))
 	if err != nil {
 		return err
 	}
@@ -86,4 +87,40 @@ func createJSON(name, status string) (string, error) {
 	err = msg.Execute(&returnMessage, replace)
 	return returnMessage.String(), nil
 
+}
+
+//SendCost struct
+type SendCost struct {
+	Yesterday string
+	CostURL   string
+}
+
+//SendCostInfo snd yesterday's cost info to mattermost
+func SendCostInfo(costData []CsvData) error {
+
+	message := `{"text": "#### {{.Yesterday}}\n
+| Service | Cost[USD]                      |
+|:--------|:------------------------------|`
+
+	for _, data := range costData {
+		row := `| ` + data.ServiceName + ` | ` + data.Cost + ` |
+`
+		message += row
+	}
+	message += `[cost explore]({{.CostURL}})`
+
+	var returnMessage bytes.Buffer
+	msg, err := template.New("myTemplate").Parse(message)
+	if err != nil {
+		return err
+	}
+
+	replace := SendCost{
+		Yesterday: time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
+		CostURL:   "https://console.aws.amazon.com/cost-reports/home?#/custom?groupBy=Service&hasBlended=false&hasAmortized=false&excludeDiscounts=true&excludeTaggedResources=false&timeRangeOption=Custom&granularity=Daily&reportName=&reportType=CostUsage&isTemplate=true&startDate=2019-10-01&endDate=2019-11-04&filter=%5B%7B%22dimension%22:%22RecordType%22,%22values%22:%5B%22Refund%22,%22Credit%22%5D,%22include%22:false,%22children%22:null%7D%5D&forecastTimeRangeOption=None&usageAs=usageQuantity&chartStyle=Stack",
+	}
+
+	err = msg.Execute(&returnMessage, replace)
+	fmt.Println(returnMessage.String())
+	return nil
 }

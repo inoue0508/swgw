@@ -2,10 +2,11 @@ package command
 
 import (
 	"fmt"
-	"os"
-        "net/http"
-	"swgw/common"
+	"net/http"
 	"net/url"
+	"os"
+	"swgw/common"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/codepipeline"
@@ -29,7 +30,7 @@ func NewPLCommand() *cobra.Command {
 			//sess := session.Must(session.NewSessionWithOptions(session.Options{
 			//	SharedConfigState: session.SharedConfigEnable,
 			//}))
-                        httpClient := http.Client{
+			httpClient := http.Client{
 				Transport: &http.Transport{
 					Proxy: func(*http.Request) (*url.URL, error) {
 						return url.Parse(httpProxy)
