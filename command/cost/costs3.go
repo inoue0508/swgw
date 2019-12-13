@@ -34,25 +34,25 @@ func NewCostS3Command(sess *session.Session) *cobra.Command {
 }
 
 func calcCost(sess *session.Session) error {
-	// svc := s3.New(sess)
-	// downloader := s3manager.NewDownloader(sess)
-	// costFile, err := getCostFromS3(svc)
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Println(costFile)
-	// err = downloadFromS3(downloader, costFile)
-	// if err != nil {
-	// 	return err
-	// }
+	svc := s3.New(sess)
+	downloader := s3manager.NewDownloader(sess)
+	costFile, err := getCostFromS3(svc)
+	if err != nil {
+		return err
+	}
+	fmt.Println(costFile)
+	err = downloadFromS3(downloader, costFile)
+	if err != nil {
+		return err
+	}
 
-	// fileList, err := common.Unzip(tempzipfile)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return err
-	// }
+	fileList, err := common.Unzip(tempzipfile)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
 
-	csvData, err := common.ReadCsv("swgw-poc-report-1.csv")
+	csvData, err := common.ReadCsv(fileList[0])
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -64,6 +64,13 @@ func calcCost(sess *session.Session) error {
 		return err
 	}
 	fmt.Println(sumdata)
+	body, err := common.SendCostInfo(sumdata)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	common.HTTPToMattermost(body)
 
 	return nil
 }
