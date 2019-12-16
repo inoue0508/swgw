@@ -89,14 +89,14 @@ func createJSON(name, status string) (string, error) {
 
 }
 
-//SendCost struct
-type SendCost struct {
+//SendS3Cost struct
+type SendS3Cost struct {
 	Yesterday string
 	CostURL   string
 }
 
-//SendCostInfo snd yesterday's cost info to mattermost
-func SendCostInfo(costData []CsvData) (string, error) {
+//SendS3CostInfo snd yesterday's cost info to mattermost
+func SendS3CostInfo(costData []CsvData) (string, error) {
 
 	message := `{"text": "#### {{.Yesterday}}\n
 | Service | Cost[USD]                      |
@@ -116,7 +116,7 @@ func SendCostInfo(costData []CsvData) (string, error) {
 		return "", err
 	}
 
-	replace := SendCost{
+	replace := SendS3Cost{
 		Yesterday: time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
 		CostURL:   "https://console.aws.amazon.com/cost-reports/home?#/dashboard",
 	}
@@ -124,4 +124,24 @@ func SendCostInfo(costData []CsvData) (string, error) {
 	err = msg.Execute(&returnMessage, replace)
 	fmt.Println(returnMessage.String())
 	return returnMessage.String(), nil
+}
+
+//AWSCostDaily2Days 2 days cost
+type AWSCostDaily2Days struct {
+	Service    string
+	DBYCost    string
+	YCost      string
+	Difference string
+}
+
+//CreateCostInfoBody create http request body
+func CreateCostInfoBody(awsCost []AWSCostDaily2Days) (string, error) {
+
+	message := `{"text": "#### {{.Yesterday}}\n
+| Service | {{.Yesterday}}[$] | {{.DBYesterdey}}[$] | Difference |
+|:--------|:------------------|:--------------------|:-----------|
+`
+
+	return message, nil
+
 }

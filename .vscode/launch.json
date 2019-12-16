@@ -12,8 +12,7 @@
             "program": "C:\\Users\\f016003\\go\\src\\swgw",
             "env": {},
             "args": [
-                "cost",
-                "s3",
+                "cost"
             ]
         }
     ]

@@ -25,7 +25,7 @@ const tmpfile = "tmp.csv"
 func NewCostS3Command(sess *session.Session) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "s3",
-		Short: "calclate day's cost",
+		Short: "not used calclate day's cost",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return calcCost(sess)
 		},
@@ -64,7 +64,7 @@ func calcCost(sess *session.Session) error {
 		return err
 	}
 	fmt.Println(sumdata)
-	body, err := common.SendCostInfo(sumdata)
+	body, err := common.SendS3CostInfo(sumdata)
 	if err != nil {
 		log.Fatal(err)
 		return err
