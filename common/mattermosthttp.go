@@ -132,16 +132,53 @@ type AWSCostDaily2Days struct {
 	DBYCost    string
 	YCost      string
 	Difference string
+	Sum        string
 }
 
-//CreateCostInfoBody create http request body
+//AWSMonthCost 1月のコスト  
+type AWSMonthCost struct{
+	Service string
+	Cost string
+}
+
+//CostReplace コストの置換構造体
+type CostReplace struct{
+	Yesterday string
+	DBYesterdey string
+	CostURL string
+	Month string
+}
+
+//Creat eCostInfoBody create   http request body
 func CreateCostInfoBody(awsCost []AWSCostDaily2Days) (string, error) {
 
-	message := `{"text": "#### {{.Yesterday}}\n
-| Service | {{.Yesterday}}[$] | {{.DBYesterdey}}[$] | Difference |
-|:--------|:------------------|:--------------------|:-----------|
+	message := `{"text": "#### {{.Yesterday}}の使用状況\n
+| Service | {{.Yesterday}} [$] | {{.DBYesterdey}} [$] | 差 [$] | {{.Month}}月合計 [$] |
+|:--------|:-------------------|:---------------------|:-------|:---------------------|
 `
 
-	return message, nil
+	for _,cost := range awsCost{
+		row := `| `     + cost.Service + ` | ` + cost.YCost + ` | ` + cost.DBYCost + ` | ` + cost.Difference + ` | ` + cost.Sum + ` |
+`
+		message += row
+	}
+
+	message += `[CostExploreコンソールへ]({{.CostURL}})"}`
+
+	replace := CostReplace{
+		Yesterday: time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
+		DBYesterdey: time.Now().AddDate(0, 0, -2).Format("2006-01-02"),
+		CostURL: "https://console.aws.amazon.com/cost-reports/home?#/dashboard",
+		Month: time.Now().AddDate(0,0,-1).Format("01"),
+	}
+
+	var returnMessage bytes.Buffer
+	msg, err := template.New("myTemplate").Parse(message)
+	if err != nil {
+		return "", err
+	}
+	err = msg.Execute(&returnMessage, replace)
+
+	return returnMessage.String(), nil
 
 }

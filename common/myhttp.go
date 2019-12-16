@@ -8,13 +8,11 @@ import (
 )
 
 //HTTPToMattermost send data to mattermost
-func HTTPToMattermost(body string) error {
-
-	urlMattermost := "http://138.91.123.197:10080/hooks/sdn1z4obxfr65yt88df7aybauy"
+func HTTPToMattermost(body,url string) error {
 
 	bodyByte := []byte(body)
 
-	request, err := http.NewRequest("POST", urlMattermost, bytes.NewBuffer(bodyByte))
+	request, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyByte))
 	if err != nil {
 		return err
 	}

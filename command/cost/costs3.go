@@ -70,7 +70,7 @@ func calcCost(sess *session.Session) error {
 		return err
 	}
 
-	common.HTTPToMattermost(body)
+	common.HTTPToMattermost(body,"url")
 
 	return nil
 }
