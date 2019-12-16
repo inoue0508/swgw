@@ -3,9 +3,9 @@ package cost
 import (
 	"fmt"
 	"os"
-	"time"
-	"swgw/common"
 	"strconv"
+	"swgw/common"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -32,35 +32,31 @@ func NewCostCommand() *cobra.Command {
 
 func executeCost(cmd *cobra.Command, args []string, sess *session.Session) error {
 
-	dailyCost,err := getDailyCost(cmd,sess)
-	if err != nil{
+	dailyCost, err := getDailyCost(cmd, sess)
+	if err != nil {
 		return err
 	}
-	monthCost,err := getCostTotal(sess)
-	if err != nil{
+	monthCost, err := getCostTotal(sess)
+	if err != nil {
 		return err
 	}
-	resultCost := combine(dailyCost,monthCost)
+	resultCost := combine(dailyCost, monthCost)
 	body, err := common.CreateCostInfoBody(resultCost)
 
 	url := os.Getenv("MATTERMOST_URL")
-	if url == ""     {
+	if url == "" {
 		fmt.Println("mattermostのincoming web hookが設定されていません。環境変数に追加してください")
 	}
-	
-	err = common.HTTPToMattermost(body,url)
-	if err != nil{
+
+	err = common.HTTPToMattermost(body, url)
+	if err != nil {
 		fmt.Println(err)
 		return err
 	}
 
 	return nil
 
-
 }
-
-
-
 
 //AWSCostUsage サービスごとの使用量と金額を格納する構造体
 type AWSCostUsage struct {
@@ -77,7 +73,7 @@ type AWSCostDaily2Days struct {
 	Difference string
 }
 
-func getDailyCost(cmd *cobra.Command, sess *session.Session) ([]common.AWSCostDaily2Days,error) {
+func getDailyCost(cmd *cobra.Command, sess *session.Session) ([]common.AWSCostDaily2Days, error) {
 
 	svc := costexplorer.New(sess)
 
@@ -91,18 +87,17 @@ func getDailyCost(cmd *cobra.Command, sess *session.Session) ([]common.AWSCostDa
 
 	res, err := svc.GetCostAndUsage(&params)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	dbycost, ycost := parse(res)
 	diffcost := createDifference(dbycost, ycost)
 
-	return diffcost,nil
+	return diffcost, nil
 }
 
-
 //getCostTotal 合計金額を取得する
-func getCostTotal(sess *session.Session) ([]common.AWSMonthCost,error){
+func getCostTotal(sess *session.Session) ([]common.AWSMonthCost, error) {
 	svc := costexplorer.New(sess)
 
 	now := time.Now()
@@ -116,19 +111,19 @@ func getCostTotal(sess *session.Session) ([]common.AWSMonthCost,error){
 	}
 	res, err := svc.GetCostAndUsage(&params)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	var monthCost []common.AWSMonthCost
 	sum := 0
-	for _,cost := range res.ResultsByTime[0].Groups {
+	for _, cost := range res.ResultsByTime[0].Groups {
 		monthCost = append(monthCost,
 			common.AWSMonthCost{
 				Service: aws.StringValue(cost.Keys[0]),
-				Cost: aws.StringValue(cost.Metrics["UnblendedCost"].Amount),
+				Cost:    aws.StringValue(cost.Metrics["UnblendedCost"].Amount),
 			})
-			cost,_ := strconv.Atoi(aws.StringValue(cost.Metrics["UnblendedCost"].Amount))
-			sum += cost
+		cost, _ := strconv.Atoi(aws.StringValue(cost.Metrics["UnblendedCost"].Amount))
+		sum += cost
 	}
 	monthCost = append(monthCost,
 		common.AWSMonthCost{
@@ -136,7 +131,7 @@ func getCostTotal(sess *session.Session) ([]common.AWSMonthCost,error){
 			Cost:    strconv.Itoa(sum),
 		})
 
-	return monthCost,nil
+	return monthCost, nil
 }
 
 func parse(cost *costexplorer.GetCostAndUsageOutput) ([]AWSCostUsage, []AWSCostUsage) {
@@ -147,17 +142,17 @@ func parse(cost *costexplorer.GetCostAndUsageOutput) ([]AWSCostUsage, []AWSCostU
 
 	var dbyesterday []AWSCostUsage
 	var yesterday []AWSCostUsage
-  sumdby := 0
+	sumdby := 0
 	for _, group := range groupdby {
 		dbyesterday = append(dbyesterday,
 			AWSCostUsage{
 				Service: aws.StringValue(group.Keys[0]),
 				Cost:    aws.StringValue(group.Metrics["UnblendedCost"].Amount),
 			})
-		cost,_ := strconv.Atoi(aws.StringValue(group.Metrics["UnblendedCost"].Amount))
+		cost, _ := strconv.Atoi(aws.StringValue(group.Metrics["UnblendedCost"].Amount))
 		sumdby += cost
 	}
-  dbyesterday = append(dbyesterday,
+	dbyesterday = append(dbyesterday,
 		AWSCostUsage{
 			Service: "合計",
 			Cost:    strconv.Itoa(sumdby),
@@ -170,8 +165,8 @@ func parse(cost *costexplorer.GetCostAndUsageOutput) ([]AWSCostUsage, []AWSCostU
 				Service: aws.StringValue(group.Keys[0]),
 				Cost:    aws.StringValue(group.Metrics["UnblendedCost"].Amount),
 			})
-			cost,_ := strconv.Atoi(aws.StringValue(group.Metrics["UnblendedCost"].Amount))
-			sumy += cost
+		cost, _ := strconv.Atoi(aws.StringValue(group.Metrics["UnblendedCost"].Amount))
+		sumy += cost
 	}
 	yesterday = append(yesterday,
 		AWSCostUsage{
@@ -198,7 +193,7 @@ func createDifference(dbyCost, yCost []AWSCostUsage) []common.AWSCostDaily2Days 
 		}
 
 		if diff == "" {
-			if dby.Cost != "0"{
+			if dby.Cost != "0" {
 				diff = "-" + dby.Cost
 			} else {
 				diff = dby.Cost
@@ -240,12 +235,11 @@ func createDifference(dbyCost, yCost []AWSCostUsage) []common.AWSCostDaily2Days 
 
 }
 
-
 func combine(daily []common.AWSCostDaily2Days, monthly []common.AWSMonthCost) []common.AWSCostDaily2Days {
 
 	count := 0
-	for _,day := range daily {
-		for _,mon := range monthly {
+	for _, day := range daily {
+		for _, mon := range monthly {
 			if day.Service == mon.Service {
 				daily[count].Sum = mon.Cost
 				break

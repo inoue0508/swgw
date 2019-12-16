@@ -8,7 +8,7 @@ import (
 )
 
 //HTTPToMattermost send data to mattermost
-func HTTPToMattermost(body,url string) error {
+func HTTPToMattermost(body, url string) error {
 
 	bodyByte := []byte(body)
 
