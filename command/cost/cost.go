@@ -67,6 +67,7 @@ func getDailyCost(cmd *cobra.Command, args []string, sess *session.Session) erro
 	body, err := common.CreateCostInfoBody(diffcost)
 	fmt.Println(body)
 	return nil
+	
 }
 
 //GetCostTotal 合計金額を取得する
