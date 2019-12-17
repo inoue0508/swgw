@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"swgw/common"
 	"time"
+	"sort"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -115,20 +116,20 @@ func getCostTotal(sess *session.Session) ([]common.AWSMonthCost, error) {
 	}
 
 	var monthCost []common.AWSMonthCost
-	sum := 0
+	var sum float64 = 0.0
 	for _, cost := range res.ResultsByTime[0].Groups {
 		monthCost = append(monthCost,
 			common.AWSMonthCost{
 				Service: aws.StringValue(cost.Keys[0]),
 				Cost:    aws.StringValue(cost.Metrics["UnblendedCost"].Amount),
 			})
-		cost, _ := strconv.Atoi(aws.StringValue(cost.Metrics["UnblendedCost"].Amount))
+		cost, _ := strconv.ParseFloat(aws.StringValue(cost.Metrics["UnblendedCost"].Amount),64)
 		sum += cost
 	}
 	monthCost = append(monthCost,
 		common.AWSMonthCost{
 			Service: "合計",
-			Cost:    strconv.Itoa(sum),
+			Cost:    strconv.FormatFloat(sum,'f',2,64),
 		})
 
 	return monthCost, nil
@@ -142,36 +143,36 @@ func parse(cost *costexplorer.GetCostAndUsageOutput) ([]AWSCostUsage, []AWSCostU
 
 	var dbyesterday []AWSCostUsage
 	var yesterday []AWSCostUsage
-	sumdby := 0
+	var sumdby float64 = 0.0
 	for _, group := range groupdby {
 		dbyesterday = append(dbyesterday,
 			AWSCostUsage{
 				Service: aws.StringValue(group.Keys[0]),
 				Cost:    aws.StringValue(group.Metrics["UnblendedCost"].Amount),
 			})
-		cost, _ := strconv.Atoi(aws.StringValue(group.Metrics["UnblendedCost"].Amount))
+		cost, _ := strconv.ParseFloat(aws.StringValue(group.Metrics["UnblendedCost"].Amount),64)
 		sumdby += cost
 	}
 	dbyesterday = append(dbyesterday,
 		AWSCostUsage{
 			Service: "合計",
-			Cost:    strconv.Itoa(sumdby),
+			Cost:    strconv.FormatFloat(sumdby,'f',2,64),
 		})
 
-	sumy := 0
+	var sumy float64 = 0.0
 	for _, group := range groupy {
 		yesterday = append(yesterday,
 			AWSCostUsage{
 				Service: aws.StringValue(group.Keys[0]),
 				Cost:    aws.StringValue(group.Metrics["UnblendedCost"].Amount),
 			})
-		cost, _ := strconv.Atoi(aws.StringValue(group.Metrics["UnblendedCost"].Amount))
+		cost, _ := strconv.ParseFloat(aws.StringValue(group.Metrics["UnblendedCost"].Amount),64)
 		sumy += cost
 	}
 	yesterday = append(yesterday,
 		AWSCostUsage{
 			Service: "合計",
-			Cost:    strconv.Itoa(sumy),
+			Cost:    strconv.FormatFloat(sumy,'f',2,64),
 		})
 
 	return dbyesterday, yesterday
@@ -247,6 +248,10 @@ func combine(daily []common.AWSCostDaily2Days, monthly []common.AWSMonthCost) []
 		}
 		count++
 	}
+
+	sort.Slice(daily, func(i,j int) bool {
+		return daily[i].Service < daily[j].Service
+	})
 
 	return daily
 
